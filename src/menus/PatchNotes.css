@@ -25,6 +25,12 @@
     text-shadow: 2px 2px #000A;
 }
 
+#patchnotes img {
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.52);
+}
+
 #patchnotes h1 {
     font-size: 26px;
     font-weight: 700;

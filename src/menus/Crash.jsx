@@ -1,5 +1,4 @@
 import "./Crash.css";
-import "./GameLog.jsx";
 
 import Neutralino from "@neutralinojs/lib";
 import { useRef, useEffect, useState } from "preact/hooks";

@@ -12,6 +12,9 @@ import { Worlds } from "./worlds.js";
 import { Skins } from "./skins.js";
 import { Exec } from "./exec.js";
 import { Utils } from "./utils.js";
+import { API } from "./api.js";
+
+import config from "../data/config.js";
 
 export class Manager {
     constructor() {
@@ -28,6 +31,7 @@ export class Manager {
         this.worlds = new Worlds(this);
         this.skins = new Skins(this);
         this.exec = new Exec(this);
+        this.api = new API(config.apiDomain);
     };
 
     async init() {

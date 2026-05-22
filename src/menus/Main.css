@@ -170,6 +170,7 @@
 
 #top-bar > #main-actions {
 	justify-content: flex-end;
+	width: 280px;
 }
 
 #top-bar > #main-actions > * {

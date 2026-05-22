@@ -1,0 +1,109 @@
+#top-bar > h1 {
+    font: 20px 'Minecraftia', sans-serif;
+    text-shadow: 2px 2px #000A;
+    margin: 0;
+}
+
+#main-actions:has(.mc-textbox #search-query) {
+    width: 450px !important;
+}
+.mc-textbox:has(#search-query), #search-query {
+    width: 250px !important;
+}
+label[for="search-query"] {
+    display: none;
+}
+
+#game-log {
+    width: calc(100vw - 80px);
+    height: calc(100% - 83px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+    padding: 16px 0;
+    margin: 10px 20px;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, #1a1a1a 95%, #e8e8e8 5%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    border-radius: 8px;
+
+    color: rgb(232, 232, 232);
+    font: 10pt monospace;
+}
+
+#game-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+#game-log::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+#game-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.log-entry {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 12px;
+}
+
+.line-number {
+    color: rgba(255, 255, 255, 0.444);
+    text-align: right;
+    user-select: none;
+    padding-right: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.log-message {
+    line-height: 1.6;
+    white-space: pre-wrap;
+    tab-size: 4;
+    word-break: break-word;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.log-message::selection {
+    background: #797979bc;
+}
+
+.log-entry.error .log-message {
+    color: rgb(246, 36, 81);
+}
+
+.log-entry.warn .log-message {
+    color: rgb(255, 183, 77);
+}
+
+.log-entry.fixme .log-message {
+    color: rgb(255, 120, 120);
+}
+
+.log-entry.trace .log-message {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.log-entry.info .log-message {
+    color: rgb(120, 200, 255);
+}
+
+.log-entry.call .log-message {
+    color: rgb(180, 140, 255);
+}
+
+.log-entry.return .log-message {
+    color: rgb(140, 255, 180);
+}
+
+.log-entry.crash .log-message {
+    color: red;
+    font-weight: bold;
+}

@@ -1,0 +1,131 @@
+#screenshots {
+    width: calc(100vw - 60px);
+    max-height: calc(100% - 83px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+    padding: 16px 10px;
+    padding-top: 5px;
+    margin: 0 20px;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+
+    color: rgb(232, 232, 232);
+}
+
+#screenshots::-webkit-scrollbar {
+    width: 8px;
+}
+
+#screenshots::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+#screenshots::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#screenshots-empty {
+    width: calc(100vw - 60px);
+    max-height: calc(100% - 83px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+
+    padding-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font: 14px 'Minecraftia', sans-serif;
+    text-shadow: 2px 2px #000A;
+    text-align: center;
+    color: #fff;
+}
+
+#screenshot {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, #1a1a1a 95%, #e8e8e8 5%);
+    transition: border .2s ease-in-out, background .2s ease-in-out, transform .2s ease-in-out;
+    cursor: pointer;
+    position: relative;
+}
+
+#screenshot.expanded {
+    width: calc(100vw - 80px);
+    height: calc(100% - 83px);
+}
+
+#screenshot:hover {
+    transform: scale(1.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.762);
+}
+
+#screenshot.expanded:hover {
+    transform: scale(1.01) !important;
+}
+
+#screenshot:active {
+    border: #ffffff32 1px solid !important;
+    transform: scale(0.98) !important;
+}
+
+.screenshot-date {
+    position: absolute;
+    right: 5px;
+    bottom: 28px;
+    padding: 3px;
+    background: rgba(15, 15, 15, 0.69);
+    border: 1px solid rgba(0, 0, 0, 0.762);
+    border-radius: 5px;
+    font: 9px 'Minecraftia', sans-serif;
+    text-shadow: 2px 2px #000A;
+}
+
+.screenshot-instance {
+    position: absolute;
+    left: 5px;
+    bottom: 28px;
+    height: 25px;
+    width: 25px;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    display: block;
+}
+
+.screenshot-preview {
+    background: rgb(15, 15, 15);
+    height: calc(100% - 24px);
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    display: block;
+}
+
+.screenshot-filename {
+    font: 12px 'Minecraftia', sans-serif;
+    text-shadow: 2px 2px #000A;
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    padding: 3px 0;
+}
+
+#screenshots-action-bar {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    justify-content: space-between;
+    width: 100%;
+}
+
+#screenshots-action-bar>.mc-button {
+    width: 130px;
+}

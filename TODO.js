@@ -12,6 +12,5 @@
 // TODO make worlds and servers menu work
 // TODO add a corrupted installation fix menu
 // TODO accept local builds when creating instance. also accept urls like ddl
-// TODO add screenshot menu
 // TODO convert LCE world to Java worlds. https://je2be.app
 // TODO make the skin save a slim and non slim version so that LegacyEvolved can use slim skins
