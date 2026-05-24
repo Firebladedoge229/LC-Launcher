@@ -439,6 +439,7 @@ export class Exec {
 
         if (profile.username) args.push("-name", profile.username);
         if (instance.fullscreen === true) args.push("-fullscreen");
+        if (instance.quitOnDisconnect === true) args.push("-quitondisconnect");
 
         if (instance.ip) args.push("-ip", instance.ip);
         if (instance.port) args.push("-port", instance.port);

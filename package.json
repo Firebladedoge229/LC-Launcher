@@ -11,7 +11,7 @@
         "Legacy",
         "Launcher"
     ],
-    "homepage": "https://git.huckle.dev/TheHuckle/LegacyCommunityLauncher",
+    "homepage": "https://lcelauncher.com",
     "repository": {
         "type": "git",
         "url": "https://git.huckle.dev/TheHuckle/LegacyCommunityLauncher.git"
@@ -36,6 +36,7 @@
         "motion": "^12.38.0",
         "nano-markdown": "^1.2.2",
         "preact": "^10.29.0",
+        "socket.io-client": "^4.8.3",
         "three": "^0.184.0"
     },
     "devDependencies": {

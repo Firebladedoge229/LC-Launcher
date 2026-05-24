@@ -17,6 +17,8 @@ import worldsIcon from "../assets/buttons/worlds.svg";
 import serversIcon from "../assets/buttons/servers.svg";
 import gameLogIcon from "../assets/buttons/gamelog.svg";
 import folderIcon from "../assets/buttons/folder.svg";
+import multiplayerIcon from "../assets/buttons/multiplayer.svg";
+import screenshotIcon from "../assets/buttons/screenshot.svg";
 
 export default function MainMenu({ setMenu, instance, setInstance, profile, setProfile, instancesList, profilesList, processing, reloadData, runningProc }) {
     const Manager = useManager();
@@ -84,6 +86,13 @@ export default function MainMenu({ setMenu, instance, setInstance, profile, setP
                     </Button>
                     <Button id="folder-button" tooltip="Open Instance Folder" tooltipAlign="RIGHT" disabled={!instance?.id} pushable={!!instance?.id} onclick={async() => await Manager.instances.openFolder(instance?.id)}>
                         <img src={folderIcon} draggable={false} />
+                    </Button>
+                    <div style={{ width: "5px" }}></div>
+                    <Button id="screenshots-button" tooltip="Screenshots" tooltipAlign="RIGHT" onclick={() => setMenu("screenshots")}>
+                        <img src={screenshotIcon} draggable={false} />
+                    </Button>
+                    <Button id="multiplayer-button" tooltip="Multiplayer" tooltipAlign="RIGHT" disabled={!instance?.id} pushable={!!instance?.id} onclick={async() => await Manager.instances.openFolder(instance?.id)}>
+                        <img src={multiplayerIcon} draggable={false} />
                     </Button>
                     <Button id="options-button" tooltip="Options" tooltipAlign="RIGHT" disabled={processing} pushable={!processing} onclick={() => setMenu('options')}>
                         <img src={optionsIcon} draggable={false} />

@@ -67,9 +67,6 @@ export default function OptionsMenu({ setMenu }) {
                 <Button onclick={() => updateSetting('keepLauncherOpen', !settings.keepLauncherOpen)}>
                     {settings.keepLauncherOpen == false ? 'Keep Launcher Open: Disabled' : 'Keep Launcher Open: Enabled'}
                 </Button>
-                <Button onclick={() => updateSetting('fullscreen', !settings.fullscreen)}>
-                    {settings.fullscreen == false ? 'Fullscreen: Disabled' : 'Fullscreen: Enabled'}
-                </Button>
                 <Button onclick={() => updateSetting('menuMusic', !settings.menuMusic)}>
                     {settings.menuMusic == false ? 'Menu Music: Disabled' : 'Menu Music: Enabled'}
                 </Button>

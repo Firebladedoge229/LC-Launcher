@@ -26,6 +26,7 @@ import CreateProfileMenu from "./menus/CreateProfile.jsx";
 import CreateInstanceMenu from "./menus/CreateInstance.jsx";
 import EditProfileMenu from "./menus/EditProfile.jsx";
 import EditInstanceMenu from "./menus/EditInstance.jsx";
+import ScreenshotMenu from "./menus/Screenshots.jsx";
 
 export default function App() {
     const [processing, setProcessing] = useState(false);
@@ -186,6 +187,9 @@ export default function App() {
                 break;
             case "editinstance":
                 details = "Editing Instance";
+                break;
+            case "screenshots":
+                details = "Viewing Screenshots";
                 break;
         };
 
@@ -363,6 +367,7 @@ export default function App() {
                     {menu === "createinstance" && <CreateInstanceMenu setMenu={setMenu} setInstance={setInstance} reloadData={loadData} />}
                     {menu === "editprofile" &&    <EditProfileMenu setMenu={setMenu} profile={profile} setProfile={setProfile} reloadData={loadData} />}
                     {menu === "editinstance" &&   <EditInstanceMenu setMenu={setMenu} instance={instance} setInstance={setInstance} reloadData={loadData} />}
+                    {menu === "screenshots" &&    <ScreenshotMenu setMenu={setMenu} />}
                 </>}
             </Window>
 

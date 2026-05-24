@@ -36,6 +36,11 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
         serviceType: "GITHUB",
         serviceDomain: "github.com",
         compatibilityLayer: "DIRECT",
+        ip: "",
+        port: "",
+        fullscreen: false,
+        quitOnDisconnect: false,
+        customArgs: "",
         ...instance
     });
 
@@ -234,6 +239,12 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                         ]}
                         onChange={(val) => updateForm('compatibilityLayer', val)}
                     />
+                    <Textbox
+                        label="Custom Args"
+                        value={form.customArgs}
+                        onchange={(v) => updateForm('customArgs', v)}
+                        placeholder='-flag "example"'
+                    />
                 </div>
 
                 {!offline && 
@@ -339,6 +350,30 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                             ))}
                         </>
                     )}
+                </div>
+
+                <div className="instance-section">
+                    <h3>Flags</h3>
+                    <Textbox
+                        label="IP"
+                        value={form.ip}
+                        onchange={(v) => updateForm('ip', v)}
+                        maxlength={32}
+                        placeholder="lce.example.net"
+                    />
+                    <Textbox
+                        label="Port"
+                        value={form.port}
+                        onchange={(v) => updateForm('port', v)}
+                        maxlength={5}
+                        placeholder="25565"
+                    />
+                    <Button onclick={() => updateForm('fullscreen', !form.fullscreen)}>
+                        {form.fullscreen == false ? 'Fullscreen: Disabled' : 'Fullscreen: Enabled'}
+                    </Button>
+                    <Button onclick={() => updateForm('quitOnDisconnect', !form.quitOnDisconnect)}>
+                        {form.quitOnDisconnect == false ? 'Quit On Disconnect: Disabled' : 'Quit On Disconnect: Enabled'}
+                    </Button>
                 </div>
             </div>
 
