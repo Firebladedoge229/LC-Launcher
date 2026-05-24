@@ -26,9 +26,9 @@ export class Instances {
         const path = await Neutralino.filesystem.getJoinedPath(this.manager.instancesDir, id);
 
         await this.manager.utils.ensureDir(path);
-        await this.manager.utils.ensureDir(await Neutralino.filesystem.getJoinedPath(path, "content"));
+        if (data.serviceType !== "LOCAL") await this.manager.utils.ensureDir(await Neutralino.filesystem.getJoinedPath(path, "content"));
 
-        if (data.serviceType && !["GITHUB","GITLAB","GITEA"].includes(data.serviceType)) return new Error("serviceType isn't supported yet. Only GITHUB,GITLAB,GITEA are supported at the moment.");
+        if (data.serviceType && !["GITHUB", "GITLAB", "GITEA", "URL", "LOCAL"].includes(data.serviceType)) return new Error("serviceType isn't supported yet. Only GITHUB,GITLAB,GITEA are supported at the moment.");
         //if (data.compatibilityLayer === "RUNTIME") data.compatibilityLayer = (NL_OS === "Darwin") ? "WINE64" : "PROTON";
 
         const instance = {
@@ -62,7 +62,7 @@ export class Instances {
             const currentData = await this.get(id);
             if (!currentData) throw new Error("Instance not found");
 
-            if (data.serviceType && !["GITHUB","GITLAB","GITEA"].includes(data.serviceType)) return new Error("serviceType isn't supported yet. Only GITHUB,GITLAB,GITEA are supported at the moment.");
+            if (data.serviceType && !["GITHUB", "GITLAB", "GITEA", "URL", "LOCAL"].includes(data.serviceType)) return new Error("serviceType isn't supported yet. Only GITHUB,GITLAB,GITEA are supported at the moment.");
             //if (data.compatibilityLayer === "RUNTIME") data.compatibilityLayer = (NL_OS === "Darwin") ? "WINE64" : "PROTON";
 
             const updatedData = {
@@ -196,18 +196,34 @@ export class Instances {
         try {
             window.dispatchEvent(new CustomEvent("execProcessing", { detail: true }));
             const instDir = await Neutralino.filesystem.getJoinedPath(this.manager.instancesDir, id);
-            const contentDir = await Neutralino.filesystem.getJoinedPath(instDir, "content");
+            const contentDir = `${instDir}/content`;
+            //const contentDir = await Neutralino.filesystem.getJoinedPath(instDir, 'content'); // this resolves to symlink dest which causes issues when deleting
             const instance = await this.get(id);
 
-            let keepData = await Neutralino.os
+            let keepData = "NO";
+            if (instance.serviceType !== "LOCAL") {
+                keepData = await Neutralino.os
                                     .showMessageBox('Reinstall Instance',
                                                     `Do you want to keep you game data when reinstalling "${instance.name}" instance?`,
                                                     'YES_NO', 'WARNING');
+            };
             
             // remove install bit
             if (keepData == "YES") await this.manager.exec.backupPreserved(instDir);
             try {
-                await Neutralino.filesystem.remove(contentDir);
+                await Neutralino.filesystem.remove(contentDir); // this doesn't work for symlinks
+                try {
+                    if (NL_OS === "Windows") {
+                        const winLink = contentDir.replace(/\//g, '\\');
+                        console.log(`rmdir "${winLink}"`)
+                        await Neutralino.os.execCommand(`rmdir "${winLink}"`);
+                        await new Promise(r => setTimeout(r, 2000));
+                    } else {
+                        await Neutralino.os.execCommand(`rm "${contentDir}"`);
+                    };
+                } catch (e) {
+                    await Neutralino.filesystem.remove(contentDir);
+                };
             } catch {
                 return showToast("Reinstall: Failed to remove existing build");
             };

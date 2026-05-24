@@ -259,6 +259,9 @@ p {
 #min-button {
     grid-column: 1;
 }
+#min-button[data-compact="true"] {
+    grid-column: 2 !important;
+}
 
 #max-button,
 #restore-button {

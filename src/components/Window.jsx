@@ -284,16 +284,16 @@ export default function Window({ title, showClose = true, showMinimize = true, s
                     <div id="window-controls">
 
                         {showMinimize &&
-                            <div class="button" id="min-button" onClick={() => Neutralino.window.minimize()}>
+                            <div class="button" id="min-button" data-compact={NL_OS === "Windows"} onClick={() => Neutralino.window.minimize()}>
                                 <img class="icon" src={minIcon} draggable={false} />
                             </div>
                         }
-                        {showMaximize &&
+                        {NL_OS !== "Windows" && showMaximize &&
                             <div class="button" id="max-button" onClick={() => maximize()}>
                                 <img class="icon" src={maxIcon} draggable={false} />
                             </div>
                         }
-                        {showMaximize &&
+                        {NL_OS !== "Windows" && showMaximize &&
                             <div class="button" id="restore-button" onClick={() => unmaximize()}>
                                 <img class="icon" src={restoreIcon} draggable={false} />
                             </div>

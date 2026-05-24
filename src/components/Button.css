@@ -35,7 +35,10 @@
 	text-shadow: 2px 2px #202013CC;
 	color: #FFFFA0;
 }
-.mc-button[type="destructive"]:hover .title {
+.mc-button:not([disabled="true"]):active .title {
+	box-shadow: inset -2px -4px #0004, inset 2px 2px #FFF5;
+}
+.mc-button[type="destructive"]:not([disabled="true"]):hover .title {
 	background-color: rgba(101, 9, 9, 0.523) !important;
 	text-shadow: 2px 2px #202013CC;
 	color: #FFFFA0;
@@ -44,9 +47,6 @@
 	background-color: unset;
 	color: unset;
 	transform: scale(1.05);
-}
-.mc-button:not([disabled="true"]):active .title {
-	box-shadow: inset -2px -4px #0004, inset 2px 2px #FFF5;
 }
 .mc-button.borderless:not([disabled="true"]):active .title {
 	transform: scale(0.99);

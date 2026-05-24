@@ -11,6 +11,11 @@
 // TODO redo launcher to include portable mode if they want it all on usb drive for example, also make it a custom ui rather than multiple popups
 // TODO make worlds and servers menu work
 // TODO add a corrupted installation fix menu
-// TODO accept local builds when creating instance. also accept urls like ddl
 // TODO convert LCE world to Java worlds. https://je2be.app
 // TODO make the skin save a slim and non slim version so that LegacyEvolved can use slim skins
+// TODO add multiplayer overlays to show notifications when playing lce
+
+//+ TODO add maxmimise and minimize back to windows build
+//+ TODO stop crash log from appearing on windows when it didn't crash
+//+ TODO make the uninstaller batch window close after completion on windows
+//+ TODO add key escape to go back and play lce exit sound

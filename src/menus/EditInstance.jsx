@@ -45,17 +45,27 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
     });
 
     useEffect(() => {
-        function offlineSupport() {
-            if (navigator.onLine) return setOffline(false);
-            setOffline(true);
-            if (form.name && form.repo && form.tag && form.exec && form.target) setReady(true);
-        };
+        const handleOnline = () => setOffline(false);
+        const handleOffline = () => setOffline(true);
 
-        offlineSupport();
+        window.addEventListener("online", handleOnline);
+        window.addEventListener("offline", handleOffline);
+        return () => {
+            window.removeEventListener("online", handleOnline);
+            window.removeEventListener("offline", handleOffline);
+        };
     }, []);
 
     useEffect(() => {
-        if (!navigator.onLine) return;
+        if (form.serviceType === "LOCAL" || form.serviceType === "URL" || offline) setReady(!!(form.name && form.exec && form.repo));
+    }, [form.name, form.exec, form.repo, form.tag, form.target, form.serviceType, offline]);
+
+    useEffect(() => {
+        if (offline || form.serviceType === "URL" || form.serviceType === "LOCAL") {
+            setAvailableTags([]);
+            setAvailableAssets([]);
+            return;
+        };
 
         const parts = form.repo.split('/');
         if (parts.length < 2 || !parts[0] || !parts[1]) return setAvailableTags([]);
@@ -90,7 +100,7 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
     }, [form.repo, form.serviceType, form.serviceDomain]);
 
     useEffect(() => {
-        if (!navigator.onLine) return;
+        if (offline || form.serviceType === "URL" || form.serviceType === "LOCAL") return;
 
         const selectedRelease = availableTags.find(t => t.value === form.tag);
         if (selectedRelease?.assets) {
@@ -121,9 +131,12 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
     const updateForm = (key, val) => {
         setForm(prev => {
             const mod = { ...prev, [key]: val };
-
-            if (mod.name && mod.repo && mod.tag && mod.exec && mod.target) setReady(true);
-            else setReady(false);
+        
+            if (mod.serviceType === "LOCAL" || mod.serviceType === "URL") {
+                setReady(!!(mod.name && mod.exec && mod.repo)); 
+            } else {
+                setReady(!!(mod.name && mod.exec && mod.repo && mod.tag && mod.target));
+            };
 
             return mod;
         });
@@ -155,6 +168,9 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                                                 'YES_NO', 'WARNING');
         if (confirmReinstall !== "YES") return;
 
+        const saveRes = await handleSave(false);
+        if (saveRes !== true) return;
+
         setProcessing(true);
         try {
             setMenu('main');
@@ -176,10 +192,33 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
         };
     };
 
-    const handleSave = async () => {
+    const handleSave = async (goBack = true) => {
         setProcessing(true);
         try {
             const tempForm = { ...form };
+
+            if (tempForm.serviceType === "URL") {
+                try {
+                    const url = new URL(tempForm.repo);
+                    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Protocol must be HTTP or HTTPS");
+                    if (!(url.pathname.endsWith(".zip") || url.pathname.endsWith(".tar.gz") || url.pathname.endsWith(".tar.xz"))) throw new Error("File extension must be .zip / .tar.gz / .tar.xz");
+                } catch (e) {
+                    showToast("Invalid Direct Download Link");
+                    setProcessing(false);
+                    return;
+                };
+            } else if (tempForm.serviceType === "LOCAL") {
+                try {
+                    const stats = await Neutralino.filesystem.readDirectory(tempForm.repo);
+                    const hasExec = stats.some(e => e.entry.toLowerCase() === tempForm.exec.toLowerCase());
+
+                    if (!hasExec) showToast(`Warning: '${tempForm.exec}' not found in target folder`);
+                } catch (e) {
+                    showToast("Local Build Path does not exist");
+                    setProcessing(false);
+                    return;
+                };
+            };
 
             if (tempForm.serviceType === "CODEBERG") tempForm.serviceType = "GITEA";
             if (tempForm.icon?.trim() === "") tempForm.icon = null;
@@ -193,12 +232,20 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
             const updatedInst = await Manager.instances.update(instance.id, tempForm);
             await reloadData();
             setInstance(updatedInst);
-            setMenu('main');
+            if (goBack !== false) setMenu('main');
+            return true;
         } catch (err) {
+            console.error(err)
             showToast("Error: " + err.message);
         } finally {
             setProcessing(false);
         };
+    };
+
+    const handleSelectBuildDir = async () => {
+        const res = await Neutralino.os.showFolderDialog("Select Local Build Directory");
+        if (!res || res.length === 0) return;
+        updateForm('repo', res);
     };
 
     return (
@@ -226,6 +273,7 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                         value={form.exec}
                         onchange={(v) => updateForm('exec', v)}
                         placeholder="Minecraft.Client.exe"
+                        maxlength={100}
                     />
                     <Select
                         label="Compatibility Layer"
@@ -244,6 +292,7 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                         value={form.customArgs}
                         onchange={(v) => updateForm('customArgs', v)}
                         placeholder='-flag "example"'
+                        maxlength={100}
                     />
                 </div>
 
@@ -257,15 +306,18 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                                 { label: "GitHub", value: "GITHUB" },
                                 { label: "GitLab", value: "GITLAB" },
                                 { label: "Gitea / Forgejo", value: "GITEA" },
-                                { label: "Codeberg", value: "CODEBERG" }
+                                { label: "Codeberg", value: "CODEBERG" },
+                                { label: "Direct Download Link", value: "URL" },
+                                { label: "Local Build Directory", value: "LOCAL" }
                             ]}
                             onChange={(val) => {
                                 let domain = "";
                                 if (val === "GITHUB") domain = "github.com";
                                 if (val === "GITLAB") domain = "gitlab.com";
                                 if (val === "CODEBERG") domain = "codeberg.org";
-
-                                setForm(prev => ({ ...prev, serviceType: val, serviceDomain: domain }));
+    
+                                setForm(prev => ({ ...prev, serviceDomain: domain, tag: "", target: "", repo: ""}));
+                                updateForm("serviceType", val);
                             }}
                         />
                         {(form.serviceType === "GITEA") && (
@@ -277,26 +329,44 @@ export default function EditInstanceMenu({ setMenu, instance, setInstance, reloa
                             />
                         )}
                         <Textbox
-                            label="Repository (User/Repo)"
+                            label={
+                                form.serviceType === "LOCAL" ? "Local Build Path" :
+                                form.serviceType === "URL" ? "Direct Download Link (.zip / .tar.gz / .tar.xz)" :
+                                "Repository (User/Repo)"
+                            }
                             value={form.repo}
                             onchange={(v) => updateForm('repo', v)}
-                            placeholder="pieeebot/neoLegacy"
+                            placeholder={
+                                form.serviceType === "LOCAL" ? "/home/ghost/Documents/LCEBuild" :
+                                form.serviceType === "URL" ? "https://example.com/LCEWindows64.zip" :
+                                "ghost/LCESource"
+                            }
+                            maxlength={200}
                         />
-                        <Select 
-                            label="Release Tag"
-                            value={form.tag}
-                            options={availableTags}
-                            onChange={(val) => updateForm('tag', val)}
-                            disabled={availableTags.length === 0}
-                        />
+                        {form.serviceType == "LOCAL" &&
+                            <Button onclick={handleSelectBuildDir}>
+                                Choose Local Build Path
+                            </Button>
+                        }
+                        {form.serviceType !== "URL" && form.serviceType !== "LOCAL" && (
+                            <>
+                                <Select 
+                                    label="Release Tag"
+                                    value={form.tag}
+                                    options={availableTags}
+                                    onChange={(val) => updateForm('tag', val)}
+                                    disabled={availableTags.length === 0}
+                                />
 
-                        <Select 
-                            label="Release Asset (.zip / .tar)"
-                            value={form.target}
-                            options={availableAssets}
-                            onChange={(val) => updateForm('target', val)}
-                            disabled={availableAssets.length === 0}
-                        />
+                                <Select 
+                                    label="Release Asset (.zip / .tar)"
+                                    value={form.target}
+                                    options={availableAssets}
+                                    onChange={(val) => updateForm('target', val)}
+                                    disabled={availableAssets.length === 0}
+                                />
+                            </>
+                        )}
                     </div>
                 }
 

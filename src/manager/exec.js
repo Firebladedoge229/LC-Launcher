@@ -114,7 +114,130 @@ export class Exec {
 
     async installInstance(instance, isUpdate = false) {
         try {
+            const instancePath = await Neutralino.filesystem.getJoinedPath(this.manager.instancesDir, instance.id);
+            //const contentDir = await Neutralino.filesystem.getJoinedPath(instancePath, 'content'); // this resolves to symlink dest which causes issues when deleting
+            const contentDir = `${instancePath}/content`;
+
+            //await Neutralino.filesystem.remove(contentDir).catch(e=>{}); // this doesn't work for symlinks
+            try {
+                if (NL_OS === "Windows") {
+                    const winLink = contentDir.replace(/\//g, '\\');
+                    console.log(`rmdir "${winLink}"`)
+                    await Neutralino.os.execCommand(`rmdir "${winLink}"`);
+                    await new Promise(r => setTimeout(r, 2000));
+                } else {
+                    await Neutralino.os.execCommand(`rm "${contentDir}"`);
+                };
+            } catch (e) {
+                await Neutralino.filesystem.remove(contentDir).catch(e => {});
+            };
+
+            if (instance.serviceType === "LOCAL") {
+                const targetFolder = instance.repo.trim();
+
+                if (NL_OS === "Windows") {
+                    const winLink = contentDir.replace(/\//g, '\\');
+                    const winTarget = targetFolder.replace(/\//g, '\\');
+                    
+                    const cmd = `mklink /J "${winLink}" "${winTarget}"`;
+                    const res = await Neutralino.os.execCommand(cmd);
+                    
+                    if (res.stdErr && res.stdErr.trim().length > 0) {
+                        console.error("Junction error output:", res.stdErr);
+                        return showToast(`Failed to link folder: ${res.stdErr}`);
+                    };
+                } else {
+                    await Neutralino.os.execCommand(`ln -s "${targetFolder}" "${contentDir}"`);
+                };
+                
+                instance.installed = true;
+                await this.manager.utils.writeJSON(`${instancePath}/instance.json`, instance);
+                return showToast("Linked local build path");
+            };
+
             if (!navigator.onLine) return showToast("Error: You must be online to install an instance");
+
+            let downloadUrl = "";
+            let archiveName = "";
+
+            if (instance.serviceType === "URL") {
+                downloadUrl = instance.repo;
+                archiveName = "download.zip";
+            } else {
+                const release = await this.manager.remotes.get(instance, instance.tag);
+                if (!release) return showToast("Error: Release not found");
+
+                if (!release.assets || release.assets.length === 0)
+                    return showToast("Error: No assets found in this release");
+
+                const asset = instance.target
+                    ? release.assets.find(a => a.name === instance.target)
+                    : release.assets[0];
+                if (!asset) return showToast("Error: Required asset not found in release");
+                
+                downloadUrl = asset.browser_download_url;
+                archiveName = instance.target;
+                instance.assetId = asset.id;
+            };
+
+            const zipPath = await Neutralino.filesystem.getJoinedPath(instancePath, archiveName);
+
+            await this.manager.utils.ensureDir(contentDir);
+
+            console.log("Downloading build...");
+            const download = new Download(downloadUrl, { label: `Downloading instance${isUpdate ? ' update' : ''}...` });
+            try {
+                await download.start(zipPath);
+
+                // unlock files before unzip
+                if (NL_OS === "Windows")
+                    await Neutralino.os.execCommand(`powershell -NoProfile -Command "Get-ChildItem -Path '${zipPath}' | Unblock-File"`);
+            } catch(e) {
+                console.error(e);
+                return showToast("Error: Asset download failed");
+            };
+
+            console.log("Extracting build...");
+            await this.backupPreserved(instancePath);
+            const unzipContent = new Unzip(zipPath, contentDir, { label: `Extracting instance${isUpdate ? ' update' : ''}...` });
+            try {
+                await unzipContent.start();
+
+                // unlock files before moving
+                if (NL_OS === "Windows")
+                    await Neutralino.os.execCommand(`powershell -NoProfile -Command "Get-ChildItem -Path '${contentDir}' -Recurse | Unblock-File"`);
+
+                // fix some zips having folders but some using root
+                const entries = await Neutralino.filesystem.readDirectory(contentDir);
+                if (entries.length === 1 && entries[0].type === 'DIRECTORY') {
+                    const rootDirName = entries[0].entry;
+                    const rootDirPath = await Neutralino.filesystem.getJoinedPath(contentDir, rootDirName);
+                    
+                    const rootFiles = await Neutralino.filesystem.readDirectory(rootDirPath);
+                    for (const file of rootFiles) {
+                        const srcPath = await Neutralino.filesystem.getJoinedPath(rootDirPath, file.entry);
+                        const destPath = await Neutralino.filesystem.getJoinedPath(contentDir, file.entry);
+                        
+                        await Neutralino.filesystem.move(srcPath, destPath);
+                    };
+                    await Neutralino.filesystem.remove(rootDirPath);
+                };
+            } catch(e) {
+                console.error(e);
+                try { // remove zip
+                    await Neutralino.filesystem.remove(zipPath);
+                } catch { }
+                return showToast("Error: Asset unzip failed");
+            };
+            await this.restorePreserved(instancePath);
+
+            instance.installed = true;
+
+            await this.manager.utils.writeJSON(`${instancePath}/instance.json`, instance);
+            console.log("Instance installed");
+            showToast(`Instance${isUpdate ? ' update' : ''} installed`);
+            
+            /*if (!navigator.onLine) return showToast("Error: You must be online to install an instance");
 
             const release = await this.manager.remotes.get(instance, instance.tag);
             if (!release) return showToast("Error: Release not found");
@@ -185,19 +308,23 @@ export class Exec {
 
             await this.manager.utils.writeJSON(`${instancePath}/instance.json`, instance);
             console.log("Instance installed");
-            showToast(`Instance${isUpdate ? ' update' : ''} installed`);
+            showToast(`Instance${isUpdate ? ' update' : ''} installed`);*/
         } catch (err) {
             console.error(err);
             showToast(`Error: ${err.message}`);
         } finally {
             try { // remove zip
-                await Neutralino.filesystem.remove(`${this.manager.instancesDir}/${instance.id}/${instance.target}`);
-            } catch { }
+                const targetArchive = instance.target || "download.zip";
+                const archivePath = await Neutralino.filesystem.getJoinedPath(this.manager.instancesDir, instance.id, targetArchive);
+                await Neutralino.filesystem.remove(archivePath);
+            } catch {}
         };
     };
 
     async needsUpdate(instance) {
         try {
+            if (instance.serviceType === "URL" || instance.serviceType === "LOCAL") return false;
+
             const release = await this.manager.remotes.get(instance, instance.tag);
             if (!release) return false;
 
@@ -393,6 +520,16 @@ export class Exec {
                     };
                 };
             };
+        };
+
+        // check if symlink stil exists lol
+        const contentDir = await Neutralino.filesystem.getJoinedPath(this.manager.instancesDir, instance.id, 'content');
+        try {
+            const stats = await Neutralino.filesystem.getStats(contentDir);
+            //if (stats.type !== "FILE") throw new Error(); // symlinks seem to count as files
+        } catch(e) {
+            if(instance.serviceType === "LOCAL") return showToast("Local Build Directory does not exist");
+            else return showToast("Content Directory does not exist");
         };
 
         // save skin from datauri
