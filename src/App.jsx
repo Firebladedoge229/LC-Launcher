@@ -89,9 +89,6 @@ export default function App() {
     useEffect(() => {
         async function load() {
             const loadedSettings = await loadSettings();
-
-            await DiscordRPC.init(config.rpcClientID);
-
             await Manager.init();
             await syncDefaultInstances();
             await loadData(loadedSettings);
@@ -129,7 +126,7 @@ export default function App() {
         async function toggleRPC() {
             if (settings.discordRPC === true) {
                 console.log("Activating Discord RPC...");
-                await DiscordRPC.enable(); 
+                await DiscordRPC.enable(config.rpcClientID); 
             } else {
                 await DiscordRPC.disable();
             }
@@ -137,140 +134,143 @@ export default function App() {
         toggleRPC();
     }, [settings.discordRPC]);
 
-    useEffect(async () => {
-        let details = "";
-        let state = profile?.username 
-                    ? `${profile.username} • ${profile.type.charAt(0) + profile.type.substring(1).toLowerCase()}`
-                    : "No profile";
-        //let largeImageText = profile?.uid ? `${NL_APPVERSION ? `v${NL_APPVERSION}` : ''} • Profile UID: ${profile.uid.substring(2)}` : `${NL_APPVERSION ? `v${NL_APPVERSION}` : ''}`;
-        // this above is bad cause people can then join as other people
-        let largeImageText = NL_APPVERSION ? `v${NL_APPVERSION}` : '';
-        switch (true) {
-            case menu === "crash":
-                details = "Viewing Crash Logs";
-                break;
-            case processing:
-                details = `Playing on ${instance?.name || "Unknown"}`;
-                break;
-            case menu === "main":
-                details = "In Main Menu";
-                break;
-            case menu === "options":
-                details = "Editing Options";
-                break;
-            case menu === "setup":
-                details = "Setting up launcher";
-                break;
-            case menu === "patchnotes":
-                details = "Viewing Patch Notes";
-                break;
-            case menu === "gamelog":
-                details = "Viewing Game Logs";
-                break;
-            case menu === "createprofile":
-                details = "Creating a new profile";
-                break;
-            case menu === "createinstance":
-                details = "Creating a new instance";
-                break;
-            case menu === "editprofile":
-                details = "Editing Profile";
-                break;
-            case menu === "editinstance":
-                details = "Editing Instance";
-                break;
-            case menu === "screenshots":
-                details = "Viewing Screenshots";
-                break;
-        };
+    useEffect(() => {
+        async function updateRPC() {
+            let details = "";
+            let state = profile?.username 
+                        ? `${profile.username} • ${profile.type.charAt(0) + profile.type.substring(1).toLowerCase()}`
+                        : "No profile";
+            //let largeImageText = profile?.uid ? `${NL_APPVERSION ? `v${NL_APPVERSION}` : ''} • Profile UID: ${profile.uid.substring(2)}` : `${NL_APPVERSION ? `v${NL_APPVERSION}` : ''}`;
+            // this above is bad cause people can then join as other people
+            let largeImageText = NL_APPVERSION ? `v${NL_APPVERSION}` : '';
+            switch (true) {
+                case menu === "crash":
+                    details = "Viewing Crash Logs";
+                    break;
+                case processing:
+                    details = `Playing on ${instance?.name || "Unknown"}`;
+                    break;
+                case menu === "main":
+                    details = "In Main Menu";
+                    break;
+                case menu === "options":
+                    details = "Editing Options";
+                    break;
+                case menu === "setup":
+                    details = "Setting up launcher";
+                    break;
+                case menu === "patchnotes":
+                    details = "Viewing Patch Notes";
+                    break;
+                case menu === "gamelog":
+                    details = "Viewing Game Logs";
+                    break;
+                case menu === "createprofile":
+                    details = "Creating a new profile";
+                    break;
+                case menu === "createinstance":
+                    details = "Creating a new instance";
+                    break;
+                case menu === "editprofile":
+                    details = "Editing Profile";
+                    break;
+                case menu === "editinstance":
+                    details = "Editing Instance";
+                    break;
+                case menu === "screenshots":
+                    details = "Viewing Screenshots";
+                    break;
+            };
 
-        let skinCDNLink = undefined;
-        if (profile) {
-            if (profile.id === lastProfileID.current && lastSkinCDNLink.current) {
-                skinCDNLink = lastSkinCDNLink.current;
-            } else if (!profile.skinRender) { // this is steve
-                skinCDNLink = "steve_skin";
-                lastSkinCDNLink.current = "steve_skin";
-                lastProfileID.current = profile.id;
-            } else {
-                try {
-                    const img = new Image();
-                    img.src = profile.skinRender;
-                    
-                    await new Promise((resolve) => {
-                        img.onload = resolve;
-                    });
-
-                    const upscaleCanvas = document.createElement('canvas');
-                    const upscaleContext = upscaleCanvas.getContext('2d');
-                    
-                    const targetSize = 128; 
-                    upscaleCanvas.width = targetSize;
-                    upscaleCanvas.height = targetSize;
-
-                    upscaleContext.imageSmoothingEnabled = false;
-                    upscaleContext.webkitImageSmoothingEnabled = false;
-                    upscaleContext.mozImageSmoothingEnabled = false;
-                    upscaleContext.msImageSmoothingEnabled = false;
-
-                    upscaleContext.drawImage(img, 0, 0, targetSize, targetSize);
-                    
-                    const blob = await new Promise((resolve) => {
-                        upscaleCanvas.toBlob(resolve, 'image/png');
-                    });
-                    if (!blob) throw new Error("Failed to convert canvas to blob");
-
-                    const formData = new FormData();
-                    formData.append('file', blob, 'skinRender.png');
-                    formData.append('expire', 21600); // 6h
-                    const response = await fetch('https://tmpfiles.org/api/v1/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        const json = await response.json();
-                        if (json.status === 'success' && json.data?.url) {
-                            const newSkinCDNLink = json.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-                            
-                            skinCDNLink = newSkinCDNLink;
-                            lastSkinCDNLink.current = newSkinCDNLink;
-                            lastProfileID.current = profile.id;
-                        } else {
-                            throw new Error("Skin upload wasn't successful");
-                        };
-                    } else {
-                        throw new Error("Skin didn't return ok response");
-                    };
-                } catch (e) {
-                    console.error(e);
-                    
+            let skinCDNLink = undefined;
+            if (profile) {
+                if (profile.id === lastProfileID.current && lastSkinCDNLink.current) {
+                    skinCDNLink = lastSkinCDNLink.current;
+                } else if (!profile.skinRender) { // this is steve
                     skinCDNLink = "steve_skin";
                     lastSkinCDNLink.current = "steve_skin";
                     lastProfileID.current = profile.id;
+                } else {
+                    try {
+                        const img = new Image();
+                        img.src = profile.skinRender;
+                        
+                        await new Promise((resolve) => {
+                            img.onload = resolve;
+                        });
+
+                        const upscaleCanvas = document.createElement('canvas');
+                        const upscaleContext = upscaleCanvas.getContext('2d');
+                        
+                        const targetSize = 128; 
+                        upscaleCanvas.width = targetSize;
+                        upscaleCanvas.height = targetSize;
+
+                        upscaleContext.imageSmoothingEnabled = false;
+                        upscaleContext.webkitImageSmoothingEnabled = false;
+                        upscaleContext.mozImageSmoothingEnabled = false;
+                        upscaleContext.msImageSmoothingEnabled = false;
+
+                        upscaleContext.drawImage(img, 0, 0, targetSize, targetSize);
+                        
+                        const blob = await new Promise((resolve) => {
+                            upscaleCanvas.toBlob(resolve, 'image/png');
+                        });
+                        if (!blob) throw new Error("Failed to convert canvas to blob");
+
+                        const formData = new FormData();
+                        formData.append('file', blob, 'skinRender.png');
+                        formData.append('expire', 21600); // 6h
+                        const response = await fetch('https://tmpfiles.org/api/v1/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            const json = await response.json();
+                            if (json.status === 'success' && json.data?.url) {
+                                const newSkinCDNLink = json.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                                
+                                skinCDNLink = newSkinCDNLink;
+                                lastSkinCDNLink.current = newSkinCDNLink;
+                                lastProfileID.current = profile.id;
+                            } else {
+                                throw new Error("Skin upload wasn't successful");
+                            };
+                        } else {
+                            throw new Error("Skin didn't return ok response");
+                        };
+                    } catch (e) {
+                        console.error(e);
+                        
+                        skinCDNLink = "steve_skin";
+                        lastSkinCDNLink.current = "steve_skin";
+                        lastProfileID.current = profile.id;
+                    };
                 };
             };
-        };
 
-        console.log("Updating RPC:", { details, state });
-        DiscordRPC.edit({
-            details,
-            state,
-            largeImageText,
-            largeImageKey: config.rpcIcon,
-            smallImageKey: skinCDNLink,
-            smallImageText: profile?.username,
-            buttons: [
-                {
-                    label: config.button1Label,
-                    url: config.button1Url
-                },
-                {
-                    label: config.button2Label,
-                    url: config.button2Url
-                }
-            ]
-        });
+            console.log("Updating RPC:", { details, state });
+            DiscordRPC.edit({
+                details,
+                state,
+                largeImageText,
+                largeImageKey: config.rpcIcon,
+                smallImageKey: skinCDNLink,
+                smallImageText: profile?.username,
+                buttons: [
+                    {
+                        label: config.button1Label,
+                        url: config.button1Url
+                    },
+                    {
+                        label: config.button2Label,
+                        url: config.button2Url
+                    }
+                ]
+            });
+        };
+        updateRPC();
     }, [menu, instance, profile, processing, settings.discordRPC]);
 
     useEffect(() => {

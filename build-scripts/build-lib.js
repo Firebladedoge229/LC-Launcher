@@ -55,7 +55,7 @@ for (const [target, fileName] of TARGETS) {
         };
     };*/
 
-    if (target.includes("darwin"))
+    if (target.includes("darwin") && process.platform === "darwin")
         execSync(`codesign --sign - --force --preserve-metadata=entitlements,requirements,flags,runtime "${outfile}"`, { stdio: "ignore" });
 
     console.log(`Built ${target}\n`);

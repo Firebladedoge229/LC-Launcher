@@ -16,13 +16,9 @@ let currentConfig = { ...defaultActivity };
 let isReady = false;
 
 class DiscordRPC {
-    static async init(callID, ext, clientIdTemp) {
+    static async enable(callID, ext, clientIdTemp) {
         clientId = clientIdTemp;
-        return true;
-    };
-
-    static async enable(callID, ext) {
-        if (client || !clientId) return false;
+        if (client) return false;
 
         return new Promise((resolve, reject) => {
             try {
