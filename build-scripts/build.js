@@ -202,7 +202,7 @@ function buildWin(cfg) {
         const zipParent = path.join("./dist", `win_${arch}`);
         const zipName = `./dist/${appName.replace(".exe", "")}-win-${arch}.zip`;
         if (process.platform === "win32")
-            run(`powershell Compress-Archive -Path "${zipParent}\\*" -DestinationPath "${zipName}" -Force`);
+            run(`powershell -Command "Compress-Archive -Path '${zipParent}\\*' -DestinationPath '${zipName}' -Force"`);
         else
             run(`cd ./dist && zip -9 -rq "${path.basename(zipName)}" "win_${arch}" -x "**/._*" -x "**/.DS_Store" -x "**/__MACOSX"`);
 
