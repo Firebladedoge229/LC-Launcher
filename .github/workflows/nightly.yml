@@ -1,7 +1,9 @@
-name: Test build
+name: Nightly LC Launcher
 
 on:
     workflow_dispatch:
+    schedule:
+        - cron: "0 0 * * *"
 
 jobs:
     build:
@@ -39,10 +41,13 @@ jobs:
             - name: Publish release
               uses: softprops/action-gh-release@v1
               with:
-                  tag_name: dev-${{ github.run_id }}
+                  tag_name: nightly-${{ github.run_id }}
+                  name: "Nightly Build ${{ github.run_id }}"
+                  body: "If you have any issues with the builds below, please contact an LC Launcher dev in our discord!"
                   target_commitish: ${{ github.sha }}
-                  name: Dev Build ${{ github.run_id }}
                   generate_release_notes: true
+                  prerelease: true
+                  allowUpdates: true
                   files: |
                       dist/*.tar.gz
                       dist/*.zip
