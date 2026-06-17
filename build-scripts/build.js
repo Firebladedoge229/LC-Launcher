@@ -86,6 +86,7 @@ function buildLinux(cfg) {
     const archList = cfg.buildScript.linux.architecture;
     const binary = cfg.cli.binaryName;
     const appName = cfg.buildScript.linux.appName;
+    const safeAppName = appName.replaceAll(" ", "-");
 
     for (const arch of archList) {
         const outDir = `./dist/linux_${arch}/${appName}`;
@@ -96,20 +97,41 @@ function buildLinux(cfg) {
             process.exit(1);
         };
 
-        fs.mkdirSync(outDir, { recursive: true });
+        fs.mkdirSync(`${outDir}/usr/bin/`, { recursive: true });
 
         console.log(`Building Linux (${arch})...`);
 
-        run(`cp "${exe}" "${outDir}/"`);
-        run(`cp "./src/assets/icon.png" "${outDir}/"`);
-        run(`cp "./dist/${binary}/resources.neu" "${outDir}/"`);
+        run(`cp "${exe}" "${outDir}/usr/bin/${safeAppName}"`);
+        run(`cp "./src/assets/icon.png" "${outDir}/.DirIcon"`);
+        run(`cp "./dist/${binary}/resources.neu" "${outDir}/usr/bin/"`);
 
-        copyIfExists(`./dist/${binary}/extensions`, outDir);
-        copyLibs(`./libs`, path.join(outDir, "libs"), (f) => f.includes("linux") && (f.includes(arch) || f.includes("no-arch")));
+        copyIfExists(`./dist/${binary}/extensions`, `${outDir}/usr/bin/`);
+        copyLibs(`./libs`, path.join(`${outDir}/usr/bin/`, "libs"), (f) => f.includes("linux") && (f.includes(arch) || f.includes("no-arch")));
+
+        const appRun = `#!/bin/sh\nexec /usr/bin/${safeAppName} "$@"`;
+        fs.writeFileSync(`${outDir}/AppRun`, appRun, { mode: 0o755 });
+
+        const desktopFile = `[Desktop Entry]
+Version=1.0
+Name=${appName}
+Comment=Multi-platform launcher for LCE forks
+Exec=${safeAppName}
+Icon=icon
+Type=Application
+Categories=Game;Utility;
+Terminal=false
+StartupNotify=true
+Keywords=game;launcher;legacy;community;`;
+        fs.writeFileSync(`${outDir}/${safeAppName}.desktop`, desktopFile);
 
         const tarName = `./dist/${appName}-linux-${arch}.tar.gz`;
         const envPrefix = process.platform === 'darwin' ? 'export COPYFILE_DISABLE=1 && ' : '';
         run(`${envPrefix}tar --exclude="._*" --exclude=".DS_Store" --exclude="__MACOSX" -cJf "${tarName}" -C ./dist/linux_${arch} "${appName}"`);
+
+        if (process.platform === "linux" && process.argv.length > 2) {
+            console.log("Creating AppImage...");
+            run(`appimagetool ${outDir} ./dist/${appName}-linux-${arch}.AppImage`);
+        };
 
         console.log(`Created ${tarName}`);
     };
@@ -166,8 +188,17 @@ function buildMac(cfg) {
         copyIfExists(`./dist/${binary}/extensions`, `${appDir}/Contents/Resources/`);
         copyLibs(`./libs`, `${appDir}/Contents/Resources/libs/`, (f) => f.includes("osx") && (f.includes(arch) || f.includes("no-arch")));
 
+        const zipParent = path.join("./dist", `mac_${arch}`);
         const zipName = `./dist/${appName}-mac-${arch}.zip`;
-        run(`cd ./dist && zip -9 -rq "${path.basename(zipName)}" "mac_${arch}" -x "**/._*" -x "**/.DS_Store" -x "**/__MACOSX"`);
+        if (process.platform === "win32")
+            run(`powershell -Command "Compress-Archive -Path '${zipParent}\\*' -DestinationPath '${zipName}' -Force"`);
+        else
+            run(`cd ./dist && zip -9 -rq "${path.basename(zipName)}" "mac_${arch}" -x "**/._*" -x "**/.DS_Store" -x "**/__MACOSX"`);
+
+        if (process.platform === "darwin" && process.argv.length > 2) {
+            console.log("Creating DMG...");
+            run(`create-dmg "${appDir}" ./dist/`);
+        };
 
         console.log(`Created ${zipName}`);
     };
@@ -206,6 +237,11 @@ function buildWin(cfg) {
         else
             run(`cd ./dist && zip -9 -rq "${path.basename(zipName)}" "win_${arch}" -x "**/._*" -x "**/.DS_Store" -x "**/__MACOSX"`);
 
+        if (process.platform === "win32" && process.argv.length > 2) {
+            console.log("Creating Windows Installer...");
+            run(`makensis ./build-scripts/installer.nsi`);
+        };
+        
         console.log(`Created ${zipName}`);
     };
 };
