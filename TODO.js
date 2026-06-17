@@ -16,8 +16,10 @@
 // TODO add multiplayer overlays to show notifications when playing lce
 // TODO add realms which basically uses multiplayer system BUT if someone hosting u join their game otherwise u download world from server and host it, then u save to server when u exit.
 // TODO add world backups online, dont add until 20th march cause neo will kill u.
+// TODO add a extension system to the launcher itself so u can add stuff.
 
 //+ TODO add maxmimise and minimize back to windows build
 //+ TODO stop crash log from appearing on windows when it didn't crash
 //+ TODO make the uninstaller batch window close after completion on windows
 //+ TODO add key escape to go back and play lce exit sound
+//+ TODO add more detailed playtime so when u click on it in bottom corner it opens up and shows usage sessions, eg. 50 mins here 20 mins there.
