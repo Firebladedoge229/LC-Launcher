@@ -206,20 +206,27 @@ function buildWin(cfg) {
     };
 };
 
-console.log("Building for all platforms...");
+const targetArg = process.argv[2];
+
+console.log(`Building for ${targetArg ? targetArg : 'all platforms'}...`);
 
 const cfg = loadConfig();
-
 ensureDependencies();
-patchConfig(true);
-buildBase();
-buildLinux(cfg);
-buildMac(cfg);
 
-toggleTransparency(false);
-buildBase(false);
-buildWin(cfg);
-toggleTransparency(true);
+const shouldBuild = (platform) => !targetArg || platform.includes(targetArg);
+
+patchConfig(true);
+
+if (shouldBuild('linux') || shouldBuild('darwin')) buildBase();
+if (shouldBuild('linux')) buildLinux(cfg);
+if (shouldBuild('darwin')) buildMac(cfg);
+
+if (shouldBuild('windows')) {
+    toggleTransparency(false);
+    buildBase(false);
+    buildWin(cfg);
+    toggleTransparency(true);
+};
 
 patchConfig(false);
 
