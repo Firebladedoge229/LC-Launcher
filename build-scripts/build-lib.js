@@ -38,7 +38,7 @@ if (!fs.existsSync(join(cwd, "node_modules"))) {
 
 await mkdir(OUT_DIR, { recursive: true });
 
-for (const [target, fileName] of TARGETS) {
+for (const [target, fileName] of buildList) {
     const isWindows = target.includes("windows");
     const ext = isWindows ? ".exe" : "";
     const outfile = join(OUT_DIR, `lcLib-${fileName}${ext}`);
