@@ -11,6 +11,8 @@ export default function Slider({ id, label, min = 0, max = 100, step = 1, value,
     const { settings } = useSettings();
 
     const playClick = () => {
+        if (!settings.buttonClickSFX) return;
+
         const click = sound.cloneNode();
         click.volume = (settings?.volume ?? 100) / 100;
         click.play().catch(err => console.error("Slider sfx failed:", err));

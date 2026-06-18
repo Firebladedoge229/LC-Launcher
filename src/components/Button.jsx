@@ -29,10 +29,12 @@ export default function Button({ id = "", type="normal", disabled = false, pusha
         <div id={id} type={type} class={`mc-button ${borderless ? "borderless" : ""}`} disabled={disabled} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onclick={(e) => {
             if (pushable === false) return;
 
-            const click = sound.cloneNode();
-            click.volume = (settings?.volume ?? 100) / 100;
-            click.play().catch(err => console.error("Btn click sfx failed:", err));
-            click.onended = () => click.remove();
+            if (!!settings.buttonClickSFX) {
+                const click = sound.cloneNode();
+                click.volume = (settings?.volume ?? 100) / 100;
+                click.play().catch(err => console.error("Btn click sfx failed:", err));
+                click.onended = () => click.remove();
+            };
 
             onclick(e);
         }}>

@@ -25,6 +25,9 @@ export default function SetupOptionsMenu({ setMenu }) {
                 <Button onclick={() => updateSetting('keepLauncherOpen', !settings.keepLauncherOpen)}>
                     {settings.keepLauncherOpen == false ? 'Keep Launcher Open: Disabled' : 'Keep Launcher Open: Enabled'}
                 </Button>
+                <Button onclick={() => updateSetting('buttonClickSFX', !settings.buttonClickSFX)}>
+                    {settings.buttonClickSFX == false ? 'Button Click SFX: Disabled' : 'Button Click SFX: Enabled'}
+                </Button>
                 <Button onclick={() => updateSetting('menuMusic', !settings.menuMusic)}>
                     {settings.menuMusic == false ? 'Menu Music: Disabled' : 'Menu Music: Enabled'}
                 </Button>

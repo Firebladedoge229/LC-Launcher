@@ -1,7 +1,7 @@
 ; Huge thanks to https://github.com/Midrags/SFF/blob/main/installer.nsi
 
 !define APPNAME "LC Launcher"
-!define SAFEAPPNAME "LC Launcher"
+!define SAFEAPPNAME "LCLauncher"
 !ifndef VERSION
     !define VERSION "0.1.0"
 !endif
@@ -9,10 +9,10 @@
 !define AUTHOR "TheHuckle"
 
 Name "${APPNAME}"
-OutFile "..\dist\${APPNAME}-win-x64-Setup.exe"
+OutFile "..\dist\${SAFEAPPNAME}-win-x64-Setup.exe"
 
-InstallDir "$PROGRAMFILES\${SAFEAPPNAME}"
-InstallDirRegKey HKCU "Software\${AUTHOR}\${SAFEAPPNAME}" "InstallDir"
+InstallDir "$PROGRAMFILES\${APPNAME}"
+InstallDirRegKey HKCU "Software\${AUTHOR}\${APPNAME}" "InstallDir"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 BrandingText "${APPNAME}"
