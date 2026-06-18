@@ -19,6 +19,9 @@ BrandingText "${APPNAME}"
 
 
 
+!define MUI_CUSTOMFUNCTION_GUIINIT GUIInitDarkMode
+!define MUI_PAGE_CUSTOMFUNCTION_PRE GUIPageChangeDarkMode
+
 !include "MUI2.nsh"
 !include "x64.nsh"
 !include "Sections.nsh"
@@ -44,11 +47,11 @@ BrandingText "${APPNAME}"
 
 !define MUI_BGCOLOR "2D2D2D"
 
-Function .onGUIInit
+Function GUIInitDarkMode
     SetCtlColors $HWNDPARENT "FFFFFF" "2D2D2D"
 FunctionEnd
 
-Function .onGuiPageChange
+Function GUIPageChangeDarkMode
     SetCtlColors $HWNDPARENT "FFFFFF" "2D2D2D"
 FunctionEnd
 
