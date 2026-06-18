@@ -2,7 +2,7 @@ export default {
     /*apiDomain: "https://api.lcelauncher.com",*/
     apiDomain: "htts://localhost:8080",
     discordInvite: ["discord://-/invite/DBw6V5v8C9", "https://discord.gg/DBw6V5v8C9"],
-    defaultInstance: "neo-legacy",
+    defaultInstance: "neolegacy",
     updateURL: "https://update.lclauncher.huckle.dev/req/v1/?m=true",
 
     rpcClientID: "1493892302312050789",

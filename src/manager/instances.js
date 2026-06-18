@@ -157,7 +157,7 @@ export class Instances {
             };
             if (data.compatibilityLayer === "RUNTIME") data.compatibilityLayer = (NL_OS === "Darwin") ? "WINE64" : "PROTON";
 
-            const sanatisedID = data?.id?.replace(/^-+|-+$|[^a-z0-9-]+/g, "");
+            const sanatisedID = data?.id?.replace(/[^a-z0-9]+/g, ""); // fireblade: ^-+|-+$ is now redundant due to the new regex whitelisting specific characters (and removing others in the process) that arent dashes cause they segfault only on MY PC FOR WHATEVER GOD-FORSAKEN REASON THERE IS RAHHHHHHHHHHHH
             const id = sanatisedID || crypto.randomUUID();
             if (await this.get(id)) {
                 showToast(`Instance with same ID already exists`);
