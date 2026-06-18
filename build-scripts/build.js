@@ -109,7 +109,7 @@ function buildLinux(cfg) {
         copyIfExists(`./dist/${binary}/extensions`, `${outDir}/usr/bin/`);
         copyLibs(`./libs`, path.join(`${outDir}/usr/bin/`, "libs"), (f) => f.includes("linux") && (f.includes(arch) || f.includes("no-arch")));
 
-        const appRun = `#!/bin/sh\nexec /usr/bin/${safeAppName} "$@"`;
+        const appRun = `#!/bin/sh\nexec ./usr/bin/${safeAppName} "$@"`;
         fs.writeFileSync(`${outDir}/AppRun`, appRun, { mode: 0o755 });
 
         const desktopFile = `[Desktop Entry]
