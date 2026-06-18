@@ -4,7 +4,10 @@ import { useSettings } from "../utils/SettingsStore.jsx";
 import Button from "../components/Button.jsx";
 
 export default function SetupOptionsMenu({ setMenu }) {
+    console.log(91);
     const { settings, updateSetting } = useSettings();
+
+    console.log(92);
 
     // TODO add data dir option
 
