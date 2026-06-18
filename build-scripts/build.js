@@ -240,7 +240,7 @@ function buildWin(cfg) {
         fs.mkdirSync(outDir, { recursive: true });
 
         run(`cp "${exe}" "${outDir}/${appName}"`);
-        run(`cp "./assets/icon.ico" "${outDir}/icon.ico"`);
+        run(`cp "./assets/nsis/icon.ico" "${outDir}/icon.ico"`);
         run(`cp "./dist/${binary}/resources.neu" "${outDir}/"`);
 
         copyIfExists(`./dist/${binary}/extensions`, outDir);

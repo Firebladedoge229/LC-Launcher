@@ -24,8 +24,8 @@ BrandingText "${APPNAME}"
 !include "Sections.nsh"
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "../assets/icon.ico"
-!define MUI_UNICON "../assets/icon.ico"
+!define MUI_ICON "../assets/nsis/icon_small.ico"
+!define MUI_UNICON "../assets/nsis/icon_uninstall.ico"
 
 !define MUI_WELCOMEPAGE_TITLE "Install ${APPNAME} ${VERSION}"
 !define MUI_WELCOMEPAGE_TEXT "This will install ${APPNAME} ${VERSION} on your computer.$\r$\n$\r$\nClick Next to continue."
@@ -34,6 +34,8 @@ BrandingText "${APPNAME}"
 !define MUI_FINISHPAGE_RUN_TEXT "Launch ${APPNAME}"
 !define MUI_FINISHPAGE_LINK "Visit GitHub"
 !define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/thehuckledev/LC-Launcher"
+
+!define MUI_WELCOMEFINISHPAGE_BITMAP "../assets/nsis/mui_sidebar.bmp"
 
 ; Installer pages
 !insertmacro MUI_PAGE_WELCOME
