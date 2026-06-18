@@ -87,7 +87,7 @@
                 "arm64"
             ],
             "minimumOS": "10.13.0",
-            "appName": "LC-Launcher",
+            "appName": "LC Launcher",
             "appBundleName": "LC Launcher",
             "appIdentifier": "dev.huckle.legacycommunitylauncher",
             "appIcon": "../assets/icon_padding_512x512_512x512.icns",

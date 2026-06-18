@@ -1,57 +1,126 @@
+; Huge thanks to https://github.com/Midrags/SFF/blob/main/installer.nsi
+
+!define APPNAME "LC Launcher"
+!define SAFEAPPNAME "LC Launcher"
+!ifndef VERSION
+    !define VERSION "0.1.0"
+!endif
+!define EXENAME "LC Launcher.exe"
+!define AUTHOR "TheHuckle"
+
+Name "${APPNAME}"
+OutFile "..\dist\${APPNAME}-win-x64-Setup.exe"
+
+InstallDir "$PROGRAMFILES\${SAFEAPPNAME}"
+InstallDirRegKey HKCU "Software\${AUTHOR}\${SAFEAPPNAME}" "InstallDir"
+RequestExecutionLevel admin
+SetCompressor /SOLID lzma
+BrandingText "${APPNAME}"
+
+
+
 !include "MUI2.nsh"
+!include "x64.nsh"
+!include "Sections.nsh"
 
-!define APP_NAME "LC Launcher"
-!define APP_VERSION "0.1.0"
+!define MUI_ABORTWARNING
+!define MUI_ICON "../assets/icon.ico"
+!define MUI_UNICON "../assets/icon.ico"
 
-OutFile "..\dist\LC-Launcher-Setup.exe"
-InstallDir "$PROGRAMFILES\LCLauncher"
+!define MUI_WELCOMEPAGE_TITLE "Install ${APPNAME} ${VERSION}"
+!define MUI_WELCOMEPAGE_TEXT "This will install ${APPNAME} ${VERSION} on your computer.$\r$\n$\r$\nClick Next to continue."
 
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${EXENAME}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${APPNAME}"
+!define MUI_FINISHPAGE_LINK "Visit GitHub"
+!define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/thehuckledev/LC-Launcher"
+
+; Installer pages
 !insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_LICENSE "../LICENSE"
 !insertmacro MUI_PAGE_DIRECTORY
-
-Var StartMenuFolder
-!define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
-!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\LCLauncher"
-!define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
-!insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
-
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
+; Uninstaller pages
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
 !insertmacro MUI_LANGUAGE "English"
 
-Section "Desktop Shortcut" SEC_DESKTOP
-    CreateShortCut "$DESKTOP\LC Launcher.lnk" "$INSTDIR\LCLauncher.exe"
-SectionEnd
 
-Section "MainSection"
+
+; Require 64 bit msg box
+Function .onInit
+    ${Unless} ${RunningX64}
+        MessageBox MB_OK|MB_ICONSTOP "This installer requires a 64-bit version of Windows."
+        Abort
+    ${EndUnless}
+FunctionEnd
+
+
+
+Section "${APPNAME} (Required)" SEC_MAIN
+    SectionIn RO
+
     SetOutPath "$INSTDIR"
     File /r "..\dist\win_x64\*.*"
-    
-    !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-        CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-        CreateShortCut "$SMPROGRAMS\$StartMenuFolder\LC Launcher.lnk" "$INSTDIR\LCLauncher.exe"
-        CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\uninstall.exe"
-    !insertmacro MUI_STARTMENU_WRITE_END
-    
+
     WriteUninstaller "$INSTDIR\uninstall.exe"
 
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LCLauncher" "DisplayName" "LC Launcher"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LCLauncher" "UninstallString" "$INSTDIR\uninstall.exe"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LCLauncher" "DisplayIcon" "$INSTDIR\LCLauncher.exe
+    ; Add/Remove programs settings menu
+    SetRegView 64
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${VERSION}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "${AUTHOR}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$INSTDIR\icon.ico"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "QuietUninstallString" '"$INSTDIR\Uninstall.exe" /S'
+    WriteRegStr HKCU "Software\${AUTHOR}\${APPNAME}" "InstallDir" "$INSTDIR"
+
+    ; Windows defender exclusion
+    MessageBox MB_YESNO|MB_ICONINFORMATION \
+        "${APPNAME} can be added to Windows Defender exclusions.$\r$\n$\r$\nThis prevents the download tool from being flagged as a false positive.$\r$\n$\r$\nAdd exclusion now?" \
+        IDNO skip_defender
+
+    nsExec::ExecToLog 'powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -Command "Add-MpPreference -ExclusionPath $\"$INSTDIR$\""'
+
+    skip_defender:
 SectionEnd
 
-Section "Uninstall"
-    Delete "$INSTDIR\*.*"
-    RMDir /r "$INSTDIR"
+Section "Desktop Shortcut" SEC_DESKTOP
+    CreateShortCut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\${EXENAME}" "" "$INSTDIR\icon.ico"
+SectionEnd
 
-    RMDir /r "$APPDATA\LC Launcher.exe"
+Section "Start Menu Shortcut" SEC_STARTMENU
+    CreateDirectory "$SMPROGRAMS\${APPNAME}"
+    CreateShortcut  "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk"  "$INSTDIR\${EXENAME}" "" "$INSTDIR\icon.ico"
+    CreateShortcut  "$SMPROGRAMS\${APPNAME}\Uninstall.lnk"   "$INSTDIR\Uninstall.exe"
+SectionEnd
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAIN} "Core application files (Required)"
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "Add a shortcut on your Desktop"
+    !insertmacro MUI_DESCRIPTION_TEXT ${SEC_STARTMENU} "Add a shortcut in the Start Menu"
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+Section "Uninstall"
+    nsExec::ExecToLog 'taskkill /F /IM "${EXENAME}" /T'
+
+    RMDir /r "$INSTDIR"
+    RMDir /r "$APPDATA\${EXENAME}"
     
-    Delete "$DESKTOP\LC Launcher.lnk"
-    !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
-    Delete "$SMPROGRAMS\$StartMenuFolder\LC Launcher.lnk"
-    Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk"
-    RMDir "$SMPROGRAMS\$StartMenuFolder"
+    Delete "$DESKTOP\${APPNAME}.lnk"
+    Delete "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk"
+    Delete "$SMPROGRAMS\${APPNAME}\Uninstall.lnk"
+    RMDir  "$SMPROGRAMS\${APPNAME}"
     
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LCLauncher"
+    ; Remove from Add/Remove programs settings menu
+    SetRegView 64
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+    DeleteRegKey HKCU "Software\${AUTHOR}\${APPNAME}"
+
+    ; Remove windows defender exclusion
+    nsExec::ExecToLog 'powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -Command "Remove-MpPreference -ExclusionPath $\"$INSTDIR$\""'
 SectionEnd

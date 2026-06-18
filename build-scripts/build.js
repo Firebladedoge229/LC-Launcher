@@ -89,7 +89,7 @@ function buildLinux(cfg) {
     const safeAppName = appName.replaceAll(" ", "-");
 
     for (const arch of archList) {
-        const outDir = `./dist/linux_${arch}/${appName}`;
+        const outDir = `./dist/linux_${arch}/${safeAppName}`;
         const exe = `./dist/${binary}/${binary}-linux_${arch}`;
 
         if (!exists(exe)) {
@@ -103,6 +103,7 @@ function buildLinux(cfg) {
 
         run(`cp "${exe}" "${outDir}/usr/bin/${safeAppName}"`);
         run(`cp "./src/assets/icon.png" "${outDir}/.DirIcon"`);
+        run(`cp "./src/assets/icon.png" "${outDir}/icon.png"`);
         run(`cp "./dist/${binary}/resources.neu" "${outDir}/usr/bin/"`);
 
         copyIfExists(`./dist/${binary}/extensions`, `${outDir}/usr/bin/`);
@@ -124,13 +125,13 @@ StartupNotify=true
 Keywords=game;launcher;legacy;community;`;
         fs.writeFileSync(`${outDir}/${safeAppName}.desktop`, desktopFile);
 
-        const tarName = `./dist/${appName}-linux-${arch}.tar.gz`;
+        const tarName = `./dist/__${safeAppName}-linux-${arch}.tar.gz`;
         const envPrefix = process.platform === 'darwin' ? 'export COPYFILE_DISABLE=1 && ' : '';
-        run(`${envPrefix}tar --exclude="._*" --exclude=".DS_Store" --exclude="__MACOSX" -cJf "${tarName}" -C ./dist/linux_${arch} "${appName}"`);
+        run(`${envPrefix}tar --exclude="._*" --exclude=".DS_Store" --exclude="__MACOSX" -cJf "${tarName}" -C ./dist/linux_${arch} "${safeAppName}"`);
 
         if (process.platform === "linux" && process.argv.length > 2) {
             console.log("Creating AppImage...");
-            run(`appimagetool ${outDir} ./dist/${appName}-linux-${arch}.AppImage`);
+            run(`appimagetool "${outDir}" "./dist/${safeAppName}-linux-${arch}.AppImage"`);
         };
 
         console.log(`Created ${tarName}`);
@@ -141,6 +142,7 @@ function buildMac(cfg) {
     const archList = cfg.buildScript.mac.architecture;
     const binary = cfg.cli.binaryName;
     const appName = cfg.buildScript.mac.appName;
+    const safeAppName = appName.replaceAll(" ", "-");
 
     const appVersion = cfg.version;
     const appMinOs = cfg.buildScript.mac.minimumOS;
@@ -189,7 +191,7 @@ function buildMac(cfg) {
         copyLibs(`./libs`, `${appDir}/Contents/Resources/libs/`, (f) => f.includes("osx") && (f.includes(arch) || f.includes("no-arch")));
 
         const zipParent = path.join("./dist", `mac_${arch}`);
-        const zipName = `./dist/${appName}-mac-${arch}.zip`;
+        const zipName = `./dist/__${safeAppName}-mac-${arch}.zip`;
         if (process.platform === "win32")
             run(`powershell -Command "Compress-Archive -Path '${zipParent}\\*' -DestinationPath '${zipName}' -Force"`);
         else
@@ -197,7 +199,18 @@ function buildMac(cfg) {
 
         if (process.platform === "darwin" && process.argv.length > 2) {
             console.log("Creating DMG...");
-            run(`create-dmg "${appDir}" ./dist/`);
+            run(`create-dmg \
+                    --volname "${appName}" \
+                    --volicon "./assets/dmg/dmg-icon.icns" \
+                    --background "./assets/dmg/dmg-background.png" \
+                    --window-pos 300 100 \
+                    --window-size 800 505 \
+                    --icon-size 100 \
+                    --icon "${appName}.app" 200 190 \
+                    --hide-extension "${appName}.app" \
+                    --app-drop-link 600 185 \
+                    "./dist/${safeAppName}-mac-${arch}.dmg" \
+                    "${appDir}"`);
         };
 
         console.log(`Created ${zipName}`);
@@ -210,6 +223,8 @@ function buildWin(cfg) {
     let appName = cfg.buildScript.win.appName;
 
     if (!appName.endsWith(".exe")) appName += ".exe";
+
+    const safeAppName = appName.replaceAll(" ", "-");
 
     for (const arch of archList) {
         const outDir = `./dist/win_${arch}`;
@@ -225,13 +240,14 @@ function buildWin(cfg) {
         fs.mkdirSync(outDir, { recursive: true });
 
         run(`cp "${exe}" "${outDir}/${appName}"`);
+        run(`cp "./assets/icon.ico" "${outDir}/icon.ico"`);
         run(`cp "./dist/${binary}/resources.neu" "${outDir}/"`);
 
         copyIfExists(`./dist/${binary}/extensions`, outDir);
         copyLibs(`./libs`, path.join(outDir, "libs"), (f) => f.includes("windows") && (f.includes(arch) || f.includes("no-arch")));
 
         const zipParent = path.join("./dist", `win_${arch}`);
-        const zipName = `./dist/${appName.replace(".exe", "")}-win-${arch}.zip`;
+        const zipName = `./dist/__${safeAppName.replace(".exe", "")}-win-${arch}.zip`;
         if (process.platform === "win32")
             run(`powershell -Command "Compress-Archive -Path '${zipParent}\\*' -DestinationPath '${zipName}' -Force"`);
         else
@@ -239,7 +255,7 @@ function buildWin(cfg) {
 
         if (process.platform === "win32" && process.argv.length > 2) {
             console.log("Creating Windows Installer...");
-            run(`makensis ./build-scripts/installer.nsi`);
+            run(`"C:\\Program Files (x86)\\NSIS\\makensis.exe" ./build-scripts/installer.nsi`);
         };
         
         console.log(`Created ${zipName}`);

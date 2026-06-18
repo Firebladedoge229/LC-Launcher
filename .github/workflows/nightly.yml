@@ -35,18 +35,23 @@ jobs:
               with:
                 node-version: latest
 
-            - name: Install installer deps
-              shell: bash
+            - name: Install installer deps (Windows)
+              if: matrix.os == 'windows-latest'
+              shell: powershell
+              run: choco install nsis -y
+
+            - name: Install installer deps (Mac)
+              if: matrix.os == 'macos-latest'
+              run: HOMEBREW_REQUIRE_TAP_TRUST=1 brew install create-dmg
+
+            - name: Install installer deps (Linux)
+              if: matrix.os == 'ubuntu-latest'
               run: |
-                if [ "$RUNNER_OS" == "Windows" ]; then
-                    choco install nsis
-                elif [ "$RUNNER_OS" == "Linux" ]; then
-                    wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-                    chmod +x appimagetool
-                    sudo mv appimagetool /usr/local/bin/
-                elif [ "$RUNNER_OS" == "macOS" ]; then
-                    brew install create-dmg
-                fi
+                sudo apt-get install -y libfuse2
+
+                wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+                chmod +x appimagetool
+                sudo mv appimagetool /usr/local/bin/
 
             - name: Build lib
               run: bun ./build-scripts/build-lib.js ${{ matrix.target }}
@@ -54,21 +59,31 @@ jobs:
             - name: Build app
               run: node ./build-scripts/build.js ${{ matrix.target }}
 
+            - name: Upload Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: build-${{ matrix.target }}
+                path: dist/
+
+    publish:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download artifacts
+              uses: actions/download-artifact@v4
+              with:
+                path: artifacts
+                merge-multiple: true
+
             - name: Publish release
               uses: softprops/action-gh-release@v1
               with:
-                  tag_name: nightly-${{ github.run_id }}
-                  name: "Nightly Build ${{ github.run_id }}"
-                  body: "If you have any issues with the builds below, please contact an LC Launcher dev in our discord!"
-                  target_commitish: ${{ github.sha }}
-                  generate_release_notes: true
-                  prerelease: true
-                  allowUpdates: true
-                  files: |
-                      dist/*.tar.gz
-                      dist/*.zip
-                      dist/*.exe
-                      dist/*.AppImage
-                      dist/*.dmg
+                tag_name: nightly-${{ github.run_id }}
+                name: "Nightly Build ${{ github.run_id }}"
+                body: "If you have any issues with the builds below, please contact an LC Launcher dev in our discord!"
+                target_commitish: ${{ github.sha }}
+                generate_release_notes: true
+                prerelease: true
+                files: artifacts/*
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
