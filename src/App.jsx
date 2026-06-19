@@ -72,7 +72,7 @@ export default function App() {
     };
 
     async function syncDefaultInstances() {
-        const installedInstances = await Manager.instances.list();
+        /*const installedInstances = await Manager.instances.list();
         const installedObjects = await Promise.all(installedInstances.map(id => Manager.instances.get(id)));
 
         for await (const inst of defaultInstances) {
@@ -84,6 +84,7 @@ export default function App() {
             const { id, compatibilityLayer, ...updateData } = inst; 
             await Manager.instances.update(existing.id, updateData);
         };
+        */
     };
 
     useEffect(() => {
